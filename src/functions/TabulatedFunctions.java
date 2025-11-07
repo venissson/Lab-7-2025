@@ -123,6 +123,63 @@ public class TabulatedFunctions {
 
         return tabulatedFunc;
     }
+    // Методы чтения с рефлексией
+    public static TabulatedFunction inputTabulatedFunction(Class<?> functionClass, InputStream in) throws IOException {
+        if (!TabulatedFunction.class.isAssignableFrom(functionClass)) {
+            throw new IllegalArgumentException("Class must implement TabulatedFunction interface");
+        }
+
+        DataInputStream dataIn = new DataInputStream(in);
+
+        // Чтение количества точек
+        int pointsCount = dataIn.readInt();
+
+        // Чтение координат точек
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            double x = dataIn.readDouble();
+            double y = dataIn.readDouble();
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        // Создание объекта через рефлексию
+        try {
+            Constructor<?> constructor = functionClass.getConstructor(FunctionPoint[].class);
+            return (TabulatedFunction) constructor.newInstance((Object) points);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error creating tabulated function", e);
+        }
+    }
+
+    public static TabulatedFunction readTabulatedFunction(Class<?> functionClass, Reader in) throws IOException {
+        if (!TabulatedFunction.class.isAssignableFrom(functionClass)) {
+            throw new IllegalArgumentException("Class must implement TabulatedFunction interface");
+        }
+
+        StreamTokenizer tokenizer = new StreamTokenizer(in);
+        // Чтение количества точек
+        tokenizer.nextToken();
+        int pointsCount = (int) tokenizer.nval;
+        // Чтение координат точек
+        FunctionPoint[] points = new FunctionPoint[pointsCount];
+        for (int i = 0; i < pointsCount; i++) {
+            tokenizer.nextToken();
+            double x = tokenizer.nval;
+
+            tokenizer.nextToken();
+            double y = tokenizer.nval;
+
+            points[i] = new FunctionPoint(x, y);
+        }
+
+        // Создание объекта через рефлексию
+        try {
+            Constructor<?> constructor = functionClass.getConstructor(FunctionPoint[].class);
+            return (TabulatedFunction) constructor.newInstance((Object) points);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error creating tabulated function", e);
+        }
+    }
     public static void outputTabulatedFunction(TabulatedFunction function, OutputStream out) throws IOException { //Метод вывода табулированной функции в байтовый поток
         DataOutputStream dataOut = new DataOutputStream(out);
 
